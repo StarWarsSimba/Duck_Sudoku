@@ -157,12 +157,17 @@ class Board(object):
         """The empty board"""
         # Row/Column structure: Each row contains columns
         self.tiles: List[List[Tile]] = []
+        for row in range(NROWS):
+            cols = []
+            for col in range(NCOLS):
+                cols.append(Tile(row, col))
+            self.tiles.append(cols)
         self.groups = []
         for row in self.tiles:
             self.groups.append(row)
-        for row in range(NROWS):
+        for col in range(NCOLS):
             column = []
-            for col in range(NCOLS):
+            for row in range(NROWS):
                 column.append(self.tiles[row][col])
             self.groups.append(column)
         for block_row in range(ROOT):
@@ -174,11 +179,6 @@ class Board(object):
                         col_addr = (ROOT * block_col) + col
                         group.append(self.tiles[row_addr][col_addr])
                 self.groups.append(group)
-        for row in range(NROWS):
-            cols = []
-            for col in range(NCOLS):
-                cols.append(Tile(row, col))
-            self.tiles.append(cols)
 
     def set_tiles(self, tile_values: Sequence[Sequence[str]]):
         """Set the tile values a list of lists or a list of strings"""
@@ -196,11 +196,17 @@ class Board(object):
         return "\n".join(row_syms)
 
     def is_consistent(self) -> bool:
-        for row in range(len(self.tiles)):
+        for group in self.groups:
             used_symbols = set()
-            for col in range(row):
-                if col not in used_symbols:
-                    used_symbols.add(col)
-                else:
-                    return False
+            for tile in group:
+                if tile.value in CHOICES:
+                    if tile.value in used_symbols:
+                        return False
+                    else:
+                        used_symbols.add(tile.value)
         return True
+
+    def solve(self):
+        """Solve the puzzle!"""
+        # FIXME: This will be added in the next step
+        return
