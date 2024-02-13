@@ -186,7 +186,6 @@ class TestHiddenSingle(unittest.TestCase):
                          "....6....", "....2....",  "....8....",
                          ".........", ".........", ".....2..."]))
 
-
     def test_hidden_single_solve(self):
         """This puzzle can be solved with naked single
         and hidden single together.

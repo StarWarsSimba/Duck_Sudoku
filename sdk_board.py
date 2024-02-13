@@ -261,7 +261,7 @@ class Board(object):
             for value in leftovers:
                 tiles_with_value = []
                 for tile in group:
-                    if tile.value == value:
+                    if tile.could_be(value):
                         tiles_with_value.append(tile)
                 if len(tiles_with_value) == 1:
                     tiles_with_value[0].set_value(value)
