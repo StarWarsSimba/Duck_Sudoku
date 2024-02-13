@@ -208,11 +208,18 @@ class Board(object):
 
     def __str__(self) -> str:
         """In Sadman Sudoku format"""
-        row_syms = []
+        return "\n".join(self.as_list())
+
+
+    def as_list(self) -> List[str]:
+        """Tile values in a format compatible with
+        set_tiles.
+        """
+        row_syms = [ ]
         for row in self.tiles:
             values = [tile.value for tile in row]
             row_syms.append("".join(values))
-        return "\n".join(row_syms)
+        return row_syms
 
     def is_consistent(self) -> bool:
         for group in self.groups:
@@ -226,6 +233,42 @@ class Board(object):
         return True
 
     def solve(self):
+        """General solver; guess-and-check
+        combined with constraint propagation.
+        solve() -> bool:
+            propagate constraints.
+            if board is solved, return True
+            if board is inconsistent, return False
+            otherwise:
+                save the state of the board
+                select a tile to guess values for
+                for each value the tile could hold:
+                    set the tile to that value
+                    if solve():
+                        return True
+                    else:
+                        restore the board to saved state
+        # Tried all the possibilities; none worked
+        return False
+        """
+        self.propagate()
+        if self.is_complete():
+            return True
+        if not self.is_consistent():
+            return False
+        else:
+            saved = self.as_list()
+            tile = self.min_choice_tile()
+            for value in tile.candidates:
+                tile.set_value(value)
+                if self.solve():
+                    return True
+                else:
+                    self.set_tiles(saved)
+            return False
+
+
+    def propagate(self):
         """Repeat solution tactics until we
         don't make any progress, whether or not
         the board is solved.
@@ -265,3 +308,29 @@ class Board(object):
                         tiles_with_value.append(tile)
                 if len(tiles_with_value) == 1:
                     tiles_with_value[0].set_value(value)
+
+    def min_choice_tile(self) -> Tile:
+        """Returns a tile with value UNKNOWN and
+        minimum number of candidates.
+        Precondition: There is at least one tile
+        with value UNKNOWN.
+        """
+        min_candidates = NROWS
+        min_tile = None
+        for row in self.tiles:
+            for tile in row:
+                if tile.value == UNKNOWN and len(tile.candidates) < min_candidates:
+                    min_candidates = len(tile.candidates)
+                    min_tile = tile
+        return min_tile
+
+    def is_complete(self) -> bool:
+        """None of the tiles are UNKNOWN.
+        Note: Does not check consistency; do that
+        separately with is_consistent.
+        """
+        for row in self.tiles:
+            for tile in row:
+                if tile.value == UNKNOWN:
+                    return False
+        return True
