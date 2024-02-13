@@ -144,6 +144,25 @@ class Tile(Listenable):
         """Hash on position only (not value)"""
         return hash((self.row, self.col))
 
+    def remove_candidates(self, used_values: Set[str]) -> bool:
+        """The used values cannot be a value of this unknown tile.
+        We remove those possibilities from the list of candidates.
+        If there is exactly one candidate left, we set the
+        value of the tile.
+        Returns:  True means we eliminated at least one candidate,
+        False means nothing changed (none of the 'used_values' was
+        in our candidates set).
+        """
+        new_candidates = self.candidates.difference(used_values)
+        if new_candidates == self.candidates:
+            # Didn't remove any candidates
+            return False
+        self.candidates = new_candidates
+        if len(self.candidates) == 1:
+            self.set_value(new_candidates.pop())
+        self.notify_all(TileEvent(self, EventKind.TileChanged))
+        return True
+
 
 # ------------------------------
 #  Board class
@@ -207,6 +226,42 @@ class Board(object):
         return True
 
     def solve(self):
-        """Solve the puzzle!"""
-        # FIXME: This will be added in the next step
+        """Repeat solution tactics until we
+        don't make any progress, whether or not
+        the board is solved.
+        """
+        progress = True
+        while progress:
+            progress = self.naked_single()
+            self.hidden_single()
         return
+
+    def naked_single(self) -> bool:
+        """Eliminate candidates and check for sole remaining possibilities.
+        Return value True means we crossed off at least one candidate.
+        Return value False means we made no progress.
+        """
+        changed = False
+        for group in self.groups:
+            candidates = set()
+            for tile in group:
+                if tile.value in CHOICES:
+                    candidates.add(tile.value)
+            for tile in group:
+                if tile.remove_candidates(candidates):
+                    changed = True
+        return changed
+
+    def hidden_single(self):
+        for group in self.groups:
+            leftovers = set(CHOICES)
+            for tile in group:
+                if tile.value in CHOICES:
+                    leftovers.discard(tile.value)
+            for value in leftovers:
+                tiles_with_value = []
+                for tile in group:
+                    if tile.value == value:
+                        tiles_with_value.append(tile)
+                if len(tiles_with_value) == 1:
+                    tiles_with_value[0].set_value(value)

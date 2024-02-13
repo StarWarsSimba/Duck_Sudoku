@@ -132,5 +132,75 @@ class TestConsistent(unittest.TestCase):
         self.assertFalse(board.is_consistent())
 
 
+class TestNakedSingle(unittest.TestCase):
+    """Simple test of Naked Single using row, column, and block
+    constraints.  From Sadman Sudoku,
+    http://www.sadmansoftware.com/sudoku/nakedsingle.php
+    """
+    def test_sadman_example(self):
+        board = Board()
+        board.set_tiles([".........", "......1..", "......7..",
+                         "......29.", "........4", ".83......",
+                         "......5..", ".........", "........."])
+        progress = board.naked_single()
+        self.assertTrue(progress, "Should resolve one tile")
+        progress = board.naked_single()
+        self.assertTrue(progress, "A few candidates should be eliminated from other tiles")
+        progress = board.naked_single()
+        self.assertFalse(progress, "No more progress on this simple example")
+        self.assertEqual(str(board),
+            ".........\n......1..\n......7..\n......29.\n........4\n.83...6..\n......5..\n.........\n.........")
+
+    def test_naked_single_one(self):
+        """This puzzle can be solved with multiple rounds of naked single."""
+        board = Board()
+        board.set_tiles(["...26.7.1", "68..7..9.", "19...45..",
+                         "82.1...4.", "..46.29..", ".5...3.28",
+                         "..93...74", ".4..5..36", "7.3.18..."])
+        board.solve()
+        self.assertEqual(str(board),
+                         "\n".join(["435269781", "682571493", "197834562",
+                                    "826195347", "374682915", "951743628",
+                                    "519326874", "248957136", "763418259"]))
+
+
+class TestHiddenSingle(unittest.TestCase):
+    """Test the Hidden Single tactic, which must be combined with the
+    naked single tactic.
+    """
+
+    def test_hidden_single_example(self):
+        """Simple example from Sadman Sudoku. Since 2 is blocked
+        in two columns of the board, it must go into the middle
+        column.
+        """
+        board = Board()
+        board.set_tiles([".........", "...2.....",  ".........",
+                         "....6....", ".........",  "....8....",
+                         ".........", ".........", ".....2..."])
+        board.naked_single()
+        board.hidden_single()
+        self.assertEqual(str(board),
+                         "\n".join(
+                        [".........", "...2.....",  ".........",
+                         "....6....", "....2....",  "....8....",
+                         ".........", ".........", ".....2..."]))
+
+
+    def test_hidden_single_solve(self):
+        """This puzzle can be solved with naked single
+        and hidden single together.
+        """
+        board = Board()
+        board.set_tiles(["......12.", "24..1....", "9.1..4...",
+                         "4....365.", "....9....", ".364....1",
+                         "...1..5.6", "....5..43", ".72......"])
+        board.solve()
+        self.assertEqual(str(board),
+                         "\n".join(["687539124", "243718965", "951264387",
+                                    "419873652", "725691438", "836425791",
+                                    "394182576", "168957243", "572346819"]))
+
+
 if __name__ == "__main__":
     unittest.main()
